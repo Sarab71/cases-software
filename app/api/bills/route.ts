@@ -32,7 +32,11 @@ export async function POST(req: NextRequest) {
       };
     });
 
-    const grandTotal = processedItems.reduce((sum: number, item: any) => sum + item.totalAmount, 0);
+    // Grand total with rounding
+    const grandTotal = Math.round(
+      processedItems.reduce((sum: number, item: any) => sum + item.totalAmount, 0)
+    );
+
 
     // Create the Bill
     const newBill = new Bill({
