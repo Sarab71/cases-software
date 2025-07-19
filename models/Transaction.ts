@@ -7,6 +7,7 @@ export interface ITransaction extends Document {
   date: Date;
   description?: string;
   relatedBillId?: mongoose.Types.ObjectId;
+  invoiceNumber?: number;  // <-- Added this line
 }
 
 const transactionSchema = new Schema<ITransaction>({
@@ -15,7 +16,8 @@ const transactionSchema = new Schema<ITransaction>({
   amount: { type: Number, required: true },
   date: { type: Date, default: Date.now },
   description: String,
-  relatedBillId: { type: Schema.Types.ObjectId, ref: 'Transaction', default: null }
+  relatedBillId: { type: Schema.Types.ObjectId, ref: 'Bill', default: null }, // Fixed to 'Bill'
+  invoiceNumber: { type: Number, default: null }  // <-- Added this field
 });
 
 export default mongoose.models.Transaction || mongoose.model<ITransaction>('Transaction', transactionSchema);

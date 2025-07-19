@@ -67,10 +67,16 @@ export default function CustomerStatement({ customerId, customerName }: Props) {
                             const credit = txn.credit ? Number(txn.credit).toFixed(2) : '';
                             const balance = Number(txn.balance).toFixed(2);
 
+                            // Dynamically construct particulars with invoiceNumber if exists
+                            let particularsText = txn.particulars;
+                            if (txn.invoiceNumber) {
+                                particularsText = `Invoice #${txn.invoiceNumber}`;
+                            }
+
                             return (
                                 <tr key={txn._id || index}>
                                     <td className="border p-2">{date}</td>
-                                    <td className="border p-2">{txn.particulars}</td>
+                                    <td className="border p-2">{particularsText}</td>
                                     <td className="border p-2 text-right">{debit}</td>
                                     <td className="border p-2 text-right">{credit}</td>
                                     <td className="border p-2 text-right">{balance}</td>

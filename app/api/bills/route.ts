@@ -49,13 +49,16 @@ export async function POST(req: NextRequest) {
     await newBill.save();
 
     // Create Transaction (debit)
+    // Create Transaction (debit)
     const newTransaction = new Transaction({
       customerId: new mongoose.Types.ObjectId(customerId),
       type: 'debit',
       amount: grandTotal,
       description: `Bill Invoice #${invoiceNumber}`,
-      relatedBillId: newBill._id
+      relatedBillId: newBill._id,
+      invoiceNumber  // <-- add this line to store invoiceNumber in transaction
     });
+
 
     await newTransaction.save();
 
