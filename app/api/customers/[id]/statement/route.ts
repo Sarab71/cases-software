@@ -32,31 +32,34 @@ export async function GET(
       billMap.set(String(bill._id), bill.invoiceNumber);
     });
 
-const processedTransactions = transactions.map((txn) => {
-  const isDebit = txn.type === 'debit';
-  const amount = txn.amount;
+    const processedTransactions = transactions.map((txn) => {
+      const isDebit = txn.type === 'debit';
+      const amount = txn.amount;
 
-  if (isDebit) {
-    balance -= amount;
-  } else {
-    balance += amount;
-  }
+      if (isDebit) {
+        balance -= amount;
+      } else {
+        balance += amount;
+      }
 
-  const invoiceNumber = txn.invoiceNumber || (txn.relatedBillId ? billMap.get(String(txn.relatedBillId)) : null);
+      const invoiceNumber = txn.invoiceNumber || (txn.relatedBillId ? billMap.get(String(txn.relatedBillId)) : null);
 
-  return {
-    date: txn.date,
-    particulars: isDebit
-      ? `Invoice #${invoiceNumber ?? 'N/A'}`
-      : 'Payment Received',
-    debit: isDebit ? Math.round(amount) : null,
-    credit: !isDebit ? Math.round(amount) : null,
-    balance: Math.round(balance),
-    invoiceNumber: invoiceNumber ?? null,
-    relatedBillId: txn.relatedBillId ? String(txn.relatedBillId) : null,   // ✅ Add this line
-  };
-});
-
+      return {
+        _id: txn._id ? String(txn._id) : undefined, // ✅ Always include _id as string
+        date: txn.date,
+        particulars: isDebit
+          ? `Invoice #${invoiceNumber ?? 'N/A'}`
+          : 'Payment Received',
+        debit: isDebit ? Math.round(amount) : null,
+        credit: !isDebit ? Math.round(amount) : null,
+        balance: Math.round(balance),
+        invoiceNumber: invoiceNumber ?? null,
+        relatedBillId: txn.relatedBillId ? String(txn.relatedBillId) : null,
+        type: txn.type,
+        amount: txn.amount,
+        description: txn.description,
+      };
+    });
 
     return NextResponse.json(processedTransactions);
   } catch (error) {

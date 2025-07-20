@@ -46,12 +46,20 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// Get all transactions
-export async function GET() {
+// Get all transactions (with optional type filter)
+export async function GET(req: NextRequest) {
   await dbConnect();
 
   try {
-    const transactions = await Transaction.find().populate('customerId', 'name phone');
+    const { searchParams } = new URL(req.url);
+    const type = searchParams.get('type');
+
+    const filter: any = {};
+    if (type) {
+      filter.type = type;
+    }
+
+    const transactions = await Transaction.find(filter).populate('customerId', 'name phone');
     return NextResponse.json(transactions, { status: 200 });
   } catch (error: any) {
     console.error('Error fetching transactions:', error);

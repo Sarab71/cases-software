@@ -48,6 +48,7 @@ export default function PaymentEditForm({ paymentId, onClose, onUpdated }: Payme
         if (!confirmDelete) return;
 
         try {
+            // Use transactions endpoint for delete also
             const res = await fetch(`/api/payments/${paymentId}`, {
                 method: 'DELETE'
             });
@@ -78,13 +79,13 @@ export default function PaymentEditForm({ paymentId, onClose, onUpdated }: Payme
             <div className="flex gap-2 mt-4">
                 <button
                     onClick={handleDelete}
-                    className="bg-red-600 text-white px-3 py-1 rounded"
+                    className="bg-red-600 text-white px-3 py-1 rounded hover:cursor-pointer"
                 >
                     Delete Payment
                 </button>
                 <button
                     onClick={onClose}
-                    className="bg-gray-500 text-white px-3 py-1 rounded"
+                    className="bg-gray-500 text-white px-3 py-1 rounded hover:cursor-pointer"
                 >
                     Cancel
                 </button>

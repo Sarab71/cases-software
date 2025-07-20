@@ -38,7 +38,7 @@ export default function CustomerSideBar({ onSelectCustomer }: CustomerSideBarPro
           <li key={customer._id}>
             <button
               onClick={() => onSelectCustomer(customer._id, customer.name)}
-              className="block w-full text-left p-2 bg-blue-500 rounded text-white hover:bg-blue-400 transition"
+              className="block w-full text-left p-2 bg-blue-500 rounded text-white hover:bg-blue-400 transition hover:cursor-pointer"
             >
               {customer.name}
             </button>
