@@ -11,15 +11,11 @@ interface BillItemInput {
   discount?: number;
 }
 
-interface RouteContext {
-  params: { id: string };
-}
-
-// GET
-export async function GET(req: NextRequest, context: RouteContext) {
+// GET a bill by ID
+export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   await dbConnect();
   try {
-    const bill = await Bill.findById(context.params.id).populate('customerId');
+    const bill = await Bill.findById(params.id).populate('customerId');
     if (!bill) {
       return NextResponse.json({ message: 'Bill not found.' }, { status: 404 });
     }
@@ -30,12 +26,13 @@ export async function GET(req: NextRequest, context: RouteContext) {
   }
 }
 
-// PATCH
-export async function PATCH(req: NextRequest, context: RouteContext) {
+// PATCH to update a bill
+export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   await dbConnect();
   try {
     const { items, invoiceNumber, date }: { items: BillItemInput[]; invoiceNumber: number; date?: string } = await req.json();
-    const bill = await Bill.findById(context.params.id);
+    const bill = await Bill.findById(params.id);
+
     if (!bill) {
       return NextResponse.json({ message: 'Bill not found.' }, { status: 404 });
     }
@@ -84,11 +81,11 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
   }
 }
 
-// DELETE
-export async function DELETE(req: NextRequest, context: RouteContext) {
+// DELETE a bill by ID
+export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   await dbConnect();
   try {
-    const bill = await Bill.findById(context.params.id);
+    const bill = await Bill.findById(params.id);
     if (!bill) {
       return NextResponse.json({ message: 'Bill not found.' }, { status: 404 });
     }
