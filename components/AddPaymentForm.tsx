@@ -10,6 +10,7 @@ export default function AddPaymentForm() {
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
   const [amount, setAmount] = useState('');
+  const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
   const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -77,6 +78,7 @@ export default function AddPaymentForm() {
         body: JSON.stringify({
           customerId: selectedCustomer._id,
           amount: Number(amount),
+          date, // send date
         }),
       });
 
@@ -85,6 +87,7 @@ export default function AddPaymentForm() {
         setSelectedCustomer(null);
         setSearchTerm('');
         setAmount('');
+        setDate(new Date().toISOString().split('T')[0]);
       } else {
         const data = await response.json();
         toast.error(data.message || 'Failed to add payment.');
@@ -136,6 +139,18 @@ export default function AddPaymentForm() {
           required
           className="w-full border rounded p-2"
         />
+      </div>
+
+      <div>
+        <label className="block font-medium">Date</label>
+        <input
+          type="date"
+          value={date}
+          onChange={e => setDate(e.target.value)}
+          className="w-full border rounded p-2"
+          max={new Date().toISOString().split('T')[0]}
+        />
+        <span className="text-xs text-gray-500">Leave blank for today</span>
       </div>
 
       <button

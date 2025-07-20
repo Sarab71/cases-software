@@ -1,17 +1,26 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
-export interface IExpense extends Document {
-  title: string;
+interface Expense {
+  description: string;
   amount: number;
   date: Date;
-  description?: string;
 }
 
-const expenseSchema = new Schema<IExpense>({
-  title: { type: String, required: true },
+export interface ExpenseCategoryDocument extends Document {
+  category: string;
+  expenses: Expense[];
+}
+
+const ExpenseSchema = new Schema<Expense>({
+  description: { type: String, required: true },
   amount: { type: Number, required: true },
-  date: { type: Date, default: Date.now },
-  description: String
+  date: { type: Date, default: Date.now }
 });
 
-export default mongoose.models.Expense || mongoose.model<IExpense>('Expense', expenseSchema);
+const ExpenseCategorySchema = new Schema<ExpenseCategoryDocument>({
+  category: { type: String, required: true, unique: true },
+  expenses: [ExpenseSchema]
+});
+
+export default mongoose.models.ExpenseCategory ||
+  mongoose.model<ExpenseCategoryDocument>('ExpenseCategory', ExpenseCategorySchema);

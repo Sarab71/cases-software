@@ -15,6 +15,7 @@ interface Bill {
     invoiceNumber: number;
     items: Item[];
     customerId: string;
+    date?: string;
 }
 
 interface EditBillFormProps {
@@ -26,6 +27,7 @@ interface EditBillFormProps {
 export default function EditBillForm({ billId, onClose, onUpdated }: EditBillFormProps) {
     const [bill, setBill] = useState<Bill | null>(null);
     const [items, setItems] = useState<Item[]>([]);
+    const [editDate, setEditDate] = useState<string>('');
 
     useEffect(() => {
         const fetchBill = async () => {
@@ -34,6 +36,7 @@ export default function EditBillForm({ billId, onClose, onUpdated }: EditBillFor
                 const data = await res.json();
                 setBill(data);
                 setItems(data.items);
+                setEditDate(data.date ? data.date.split('T')[0] : '');
             }
         };
 
@@ -69,7 +72,7 @@ export default function EditBillForm({ billId, onClose, onUpdated }: EditBillFor
         const res = await fetch(`/api/bills/${billId}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ items }),
+            body: JSON.stringify({ items, date: editDate }),
         });
 
         if (res.ok) {
@@ -102,6 +105,18 @@ export default function EditBillForm({ billId, onClose, onUpdated }: EditBillFor
     return (
         <form onSubmit={handleSubmit} className="p-4 bg-gray-50 border mt-4 rounded space-y-4">
             <h3 className="text-lg font-semibold">Editing Invoice #{bill.invoiceNumber}</h3>
+
+            <div>
+                <label className="block font-medium mb-1">Bill Date</label>
+                <input
+                    type="date"
+                    value={editDate}
+                    onChange={e => setEditDate(e.target.value)}
+                    className="border p-2 rounded w-full"
+                    max={new Date().toISOString().split('T')[0]}
+                    required
+                />
+            </div>
 
             <div className="overflow-x-auto">
                 <table className="min-w-full border text-sm">

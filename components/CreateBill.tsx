@@ -19,6 +19,7 @@ interface Customer {
 }
 
 export default function CreateBillForm() {
+  const [billDate, setBillDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
   const [invoiceNumber, setInvoiceNumber] = useState<number>(1001);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [customerSearch, setCustomerSearch] = useState<string>('');
@@ -134,7 +135,6 @@ export default function CreateBillForm() {
         };
       });
 
-
       const res = await fetch('/api/bills', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -142,6 +142,7 @@ export default function CreateBillForm() {
           invoiceNumber,
           customerId: selectedCustomer._id,
           items: processedItems,
+          date: billDate, // <-- add date here
         }),
       });
 
@@ -149,6 +150,7 @@ export default function CreateBillForm() {
         toast.success('Bill created successfully');
         await fetchLatestInvoiceNumber();
         resetForm();
+        setBillDate(new Date().toISOString().split('T')[0]);
       } else {
         toast.error('Failed to create bill');
       }
@@ -269,6 +271,18 @@ export default function CreateBillForm() {
           value={invoiceNumber}
           readOnly
           className="w-full border p-2 rounded bg-gray-100"
+        />
+      </div>
+
+
+      <div>
+        <label>Date</label>
+        <input
+          type="date"
+          value={billDate}
+          onChange={e => setBillDate(e.target.value)}
+          className="w-full border p-2 rounded"
+          max={new Date().toISOString().split('T')[0]}
         />
       </div>
 
