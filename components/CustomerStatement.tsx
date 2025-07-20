@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import EditBillForm from '@/components/EditBillForm'; // Adjust the import path if needed
 
 interface Transaction {
     _id: string;
@@ -24,24 +25,32 @@ interface Props {
 export default function CustomerStatement({ customerId, customerName }: Props) {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
+    const [selectedBillId, setSelectedBillId] = useState<string | null>(null);
+
+    const fetchTransactions = useCallback(async () => {
+        setLoading(true);
+        try {
+            const res = await fetch(`/api/customers/${customerId}/statement`);
+            if (res.ok) {
+                const data = await res.json();
+                setTransactions(data);
+            }
+        } catch (err) {
+            console.error('Failed to fetch transactions', err);
+        } finally {
+            setLoading(false);
+        }
+    }, [customerId]);
 
     useEffect(() => {
-        const fetchTransactions = async () => {
-            try {
-                const res = await fetch(`/api/customers/${customerId}/statement`);
-                if (res.ok) {
-                    const data = await res.json();
-                    setTransactions(data);
-                }
-            } catch (err) {
-                console.error('Failed to fetch transactions', err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchTransactions();
-    }, [customerId]);
+    }, [fetchTransactions]);
+
+    const handleInvoiceClick = (billId?: string | null) => {
+        if (billId) {
+            setSelectedBillId(billId);
+        }
+    };
 
     return (
         <div className="bg-white p-4 rounded shadow">
@@ -50,41 +59,57 @@ export default function CustomerStatement({ customerId, customerName }: Props) {
             {loading ? (
                 <p>Loading...</p>
             ) : (
-                <table className="w-full border-collapse border border-gray-300 text-sm">
-                    <thead className="bg-gray-100">
-                        <tr>
-                            <th className="border p-2">Date</th>
-                            <th className="border p-2">Particulars</th>
-                            <th className="border p-2 text-right">Debit (₹)</th>
-                            <th className="border p-2 text-right">Credit (₹)</th>
-                            <th className="border p-2 text-right">Balance (₹)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {transactions.map((txn, index) => {
-                            const date = new Date(txn.date).toLocaleDateString();
-                            const debit = txn.debit ? Number(txn.debit).toFixed(2) : '';
-                            const credit = txn.credit ? Number(txn.credit).toFixed(2) : '';
-                            const balance = Number(txn.balance).toFixed(2);
+                <>
+                    <table className="w-full border-collapse border border-gray-300 text-sm">
+                        <thead className="bg-gray-100">
+                            <tr>
+                                <th className="border p-2">Date</th>
+                                <th className="border p-2">Particulars</th>
+                                <th className="border p-2 text-right">Debit (₹)</th>
+                                <th className="border p-2 text-right">Credit (₹)</th>
+                                <th className="border p-2 text-right">Balance (₹)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {transactions.map((txn, index) => {
+                                const date = new Date(txn.date).toLocaleDateString();
+                                const debit = txn.debit ? Number(txn.debit).toFixed(2) : '';
+                                const credit = txn.credit ? Number(txn.credit).toFixed(2) : '';
+                                const balance = Number(txn.balance).toFixed(2);
 
-                            // Dynamically construct particulars with invoiceNumber if exists
-                            let particularsText = txn.particulars;
-                            if (txn.invoiceNumber) {
-                                particularsText = `Invoice #${txn.invoiceNumber}`;
-                            }
+                                return (
+                                    <tr key={txn._id || index}>
+                                        <td className="border p-2">{date}</td>
+                                        <td
+                                            className={`border p-2 ${txn.relatedBillId ? 'text-blue-600 cursor-pointer hover:underline' : ''
+                                                }`}
+                                            onClick={() => txn.relatedBillId && handleInvoiceClick(txn.relatedBillId)}
+                                        >
+                                            {txn.invoiceNumber ? `Invoice #${txn.invoiceNumber}` : txn.particulars}
+                                        </td>
+                                        <td className="border p-2 text-right">{debit}</td>
+                                        <td className="border p-2 text-right">{credit}</td>
+                                        <td className="border p-2 text-right">{balance}</td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
 
-                            return (
-                                <tr key={txn._id || index}>
-                                    <td className="border p-2">{date}</td>
-                                    <td className="border p-2">{particularsText}</td>
-                                    <td className="border p-2 text-right">{debit}</td>
-                                    <td className="border p-2 text-right">{credit}</td>
-                                    <td className="border p-2 text-right">{balance}</td>
-                                </tr>
-                            );
-                        })}
-                    </tbody>
-                </table>
+                    {selectedBillId && (
+                        <div className="mt-6">
+                            <h3 className="text-lg font-semibold mb-2">Edit Bill</h3>
+                            <EditBillForm
+                                billId={selectedBillId}
+                                onClose={() => setSelectedBillId(null)}
+                                onUpdated={() => {
+                                    setSelectedBillId(null);
+                                    fetchTransactions();  // ✅ Refresh after update
+                                }}
+                            />
+                        </div>
+                    )}
+                </>
             )}
         </div>
     );
