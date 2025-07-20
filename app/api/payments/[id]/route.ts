@@ -6,6 +6,26 @@ import Customer from '@/models/Customer';
 interface Params {
   params: { id: string };
 }
+export async function GET(req: NextRequest, { params }: Params) {
+  await dbConnect();
+
+  try {
+    const payment = await Transaction.findById(params.id).lean() as any;
+
+    if (!payment) {
+      return NextResponse.json({ message: 'Payment not found' }, { status: 404 });
+    }
+
+    if (payment.type !== 'credit') {
+      return NextResponse.json({ message: 'This transaction is not a payment (credit)' }, { status: 400 });
+    }
+
+    return NextResponse.json(payment);
+  } catch (error: any) {
+    console.error('Error fetching payment:', error);
+    return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
+  }
+}
 
 // PATCH: Update Payment
 export async function PATCH(req: NextRequest, { params }: Params) {

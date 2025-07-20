@@ -75,6 +75,21 @@ export default function EditBillForm({ billId, onClose, onUpdated }: EditBillFor
             toast.error('Failed to update bill.');
         }
     };
+    const handleDeleteBill = async () => {
+        if (!confirm('Are you sure you want to delete this bill?')) return;
+
+        const res = await fetch(`/api/bills/${billId}`, {
+            method: 'DELETE',
+        });
+
+        if (res.ok) {
+            toast.success('Bill deleted successfully!');
+            onClose();
+            onUpdated();
+        } else {
+            toast.error('Failed to delete bill.');
+        }
+    };
 
     if (!bill) return <p>Loading bill details...</p>;
 
@@ -138,6 +153,9 @@ export default function EditBillForm({ billId, onClose, onUpdated }: EditBillFor
             <div className="flex gap-2">
                 <button type="submit" className="bg-green-600 text-white px-3 py-1 rounded">Update Bill</button>
                 <button type="button" onClick={onClose} className="bg-gray-500 text-white px-3 py-1 rounded">Cancel</button>
+                <button type="button" onClick={handleDeleteBill} className="bg-red-600 text-white px-3 py-1 rounded ml-auto">
+                    Delete Bill
+                </button>
             </div>
         </form>
     );
