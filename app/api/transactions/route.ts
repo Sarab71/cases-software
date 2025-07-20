@@ -47,22 +47,33 @@ export async function POST(req: NextRequest) {
 }
 
 // Get all transactions (with optional type filter)
+
 export async function GET(req: NextRequest) {
-  await dbConnect();
+    await dbConnect();
 
-  try {
-    const { searchParams } = new URL(req.url);
-    const type = searchParams.get('type');
+    try {
+        const { searchParams } = new URL(req.url);
+        const type = searchParams.get('type');
+        const startDate = searchParams.get('startDate');
+        const endDate = searchParams.get('endDate');
 
-    const filter: any = {};
-    if (type) {
-      filter.type = type;
+        const filter: any = {};
+        if (type) {
+            filter.type = type; // 'debit' or 'credit'
+        }
+
+        if (startDate && endDate) {
+            filter.date = {
+                $gte: new Date(startDate),
+                $lte: new Date(endDate),
+            };
+        }
+
+        const transactions = await Transaction.find(filter).populate('customerId', 'name phone');
+
+        return NextResponse.json(transactions, { status: 200 });
+    } catch (error: any) {
+        console.error('Error fetching transactions:', error);
+        return NextResponse.json({ message: 'Server error', error: error.message }, { status: 500 });
     }
-
-    const transactions = await Transaction.find(filter).populate('customerId', 'name phone');
-    return NextResponse.json(transactions, { status: 200 });
-  } catch (error: any) {
-    console.error('Error fetching transactions:', error);
-    return NextResponse.json({ message: 'Server error', error: error.message }, { status: 500 });
-  }
 }

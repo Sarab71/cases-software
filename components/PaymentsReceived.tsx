@@ -2,12 +2,22 @@
 
 import { useEffect, useState } from 'react';
 
-export default function PaymentsReceived() {
+interface PaymentsReceivedProps {
+    startDate?: string;
+    endDate?: string;
+}
+
+export default function PaymentsReceived({ startDate = '', endDate = '' }: PaymentsReceivedProps) {
     const [total, setTotal] = useState<number | null>(null);
 
     useEffect(() => {
         async function fetchTotal() {
-            const res = await fetch('/api/transactions?type=credit');
+            const params = new URLSearchParams();
+            params.append('type', 'credit');
+            if (startDate) params.append('startDate', startDate);
+            if (endDate) params.append('endDate', endDate);
+
+            const res = await fetch(`/api/transactions?${params.toString()}`);
             if (res.ok) {
                 const transactions = await res.json();
                 const sum = transactions.reduce((acc: number, t: any) => acc + (t.amount || 0), 0);
@@ -15,7 +25,7 @@ export default function PaymentsReceived() {
             }
         }
         fetchTotal();
-    }, []);
+    }, [startDate, endDate]);
 
     return (
         <div className="p-4 bg-white rounded shadow mb-4">

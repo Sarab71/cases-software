@@ -9,9 +9,9 @@ export async function POST(req: NextRequest) {
   await dbConnect();
 
   try {
-    const { invoiceNumber, customerId, items } = await req.json();
+    const { invoiceNumber, customerId, items, date } = await req.json();
 
-    if (!invoiceNumber || !customerId || !Array.isArray(items) || items.length === 0) {
+    if (!invoiceNumber || !customerId || !Array.isArray(items) || items.length === 0 || !date) {
       return NextResponse.json({ message: 'Missing required fields or items.' }, { status: 400 });
     }
 
@@ -37,18 +37,17 @@ export async function POST(req: NextRequest) {
       processedItems.reduce((sum: number, item: any) => sum + item.totalAmount, 0)
     );
 
-
     // Create the Bill
     const newBill = new Bill({
       invoiceNumber,
       customerId: new mongoose.Types.ObjectId(customerId),
       items: processedItems,
-      grandTotal
+      grandTotal,
+      date: new Date(date)  // <-- form se aayi date save ki
     });
 
     await newBill.save();
 
-    // Create Transaction (debit)
     // Create Transaction (debit)
     const newTransaction = new Transaction({
       customerId: new mongoose.Types.ObjectId(customerId),
@@ -56,9 +55,9 @@ export async function POST(req: NextRequest) {
       amount: grandTotal,
       description: `Bill Invoice #${invoiceNumber}`,
       relatedBillId: newBill._id,
-      invoiceNumber  // <-- add this line to store invoiceNumber in transaction
+      invoiceNumber,
+      date: new Date(date)  // <-- form se aayi date save ki
     });
-
 
     await newTransaction.save();
 

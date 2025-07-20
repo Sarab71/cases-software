@@ -2,12 +2,22 @@
 
 import { useEffect, useState } from 'react';
 
-export default function TotalSales() {
+interface TotalSalesProps {
+    startDate?: string;
+    endDate?: string;
+}
+
+export default function TotalSales({ startDate = '', endDate = '' }: TotalSalesProps) {
     const [total, setTotal] = useState<number | null>(null);
 
     useEffect(() => {
         async function fetchTotal() {
-            const res = await fetch('/api/transactions?type=debit');
+            const params = new URLSearchParams();
+            params.append('type', 'debit');
+            if (startDate) params.append('startDate', startDate);
+            if (endDate) params.append('endDate', endDate);
+
+            const res = await fetch(`/api/transactions?${params.toString()}`);
             if (res.ok) {
                 const transactions = await res.json();
                 const sum = transactions.reduce((acc: number, t: any) => acc + (t.amount || 0), 0);
@@ -15,7 +25,7 @@ export default function TotalSales() {
             }
         }
         fetchTotal();
-    }, []);
+    }, [startDate, endDate]);
 
     return (
         <div className="p-4 bg-white rounded shadow mb-4">

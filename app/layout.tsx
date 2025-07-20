@@ -15,7 +15,7 @@ export default function RootLayout({
         <main className="p-4">
           {children}
         </main>
-        <ToastContainer position="top-right" autoClose={3000} />
+        <ToastContainer position="top-right" autoClose={1500} />
       </body>
     </html>
   );

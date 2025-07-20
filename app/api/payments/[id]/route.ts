@@ -32,7 +32,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   await dbConnect();
 
   try {
-    const { amount, description } = await req.json();
+    const { amount, description, date } = await req.json();  // <-- date added here
 
     const payment = await Transaction.findById(params.id);
     if (!payment || payment.type !== 'credit') {
@@ -52,6 +52,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     // Update transaction
     payment.amount = amount;
     if (description) payment.description = description;
+    if (date) payment.date = new Date(date); // <-- date updated if provided
     await payment.save();
 
     return NextResponse.json({ message: 'Payment updated successfully', payment });
@@ -59,6 +60,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     return NextResponse.json({ message: error.message }, { status: 500 });
   }
 }
+
 
 // DELETE: Delete Payment
 export async function DELETE(req: NextRequest, { params }: Params) {

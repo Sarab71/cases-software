@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
   await dbConnect();
 
   try {
-    const { customerId, amount, description } = await req.json();
+    const { customerId, amount, description, date } = await req.json();  // <-- date liya
 
     if (!customerId || !amount || amount <= 0) {
       return NextResponse.json({ message: 'Customer ID and valid amount are required.' }, { status: 400 });
@@ -25,7 +25,8 @@ export async function POST(req: NextRequest) {
       customerId: new mongoose.Types.ObjectId(customerId),
       type: 'credit',
       amount,
-      description: description || 'Payment Received'
+      description: description || 'Payment Received',
+      date: date ? new Date(date) : new Date()  // <-- Save form se aayi date, warna current
     });
 
     await creditTransaction.save();

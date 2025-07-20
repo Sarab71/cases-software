@@ -2,20 +2,28 @@
 
 import { useEffect, useState } from 'react';
 
-export default function TotalOutstanding() {
+interface TotalOutstandingProps {
+    startDate?: string;
+    endDate?: string;
+}
+
+export default function TotalOutstanding({ startDate = '', endDate = '' }: TotalOutstandingProps) {
     const [total, setTotal] = useState<number | null>(null);
 
     useEffect(() => {
         async function fetchTotal() {
-            const res = await fetch('/api/customers');
+            const params = new URLSearchParams();
+            if (startDate) params.append('startDate', startDate);
+            if (endDate) params.append('endDate', endDate);
+
+            const res = await fetch(`/api/customers/outstanding?${params.toString()}`);
             if (res.ok) {
-                const customers = await res.json();
-                const sum = customers.reduce((acc: number, c: any) => acc + (c.balance || 0), 0);
-                setTotal(sum);
+                const data = await res.json();
+                setTotal(data.totalOutstanding);
             }
         }
         fetchTotal();
-    }, []);
+    }, [startDate, endDate]);
 
     return (
         <div className="p-4 bg-white rounded shadow mb-4">

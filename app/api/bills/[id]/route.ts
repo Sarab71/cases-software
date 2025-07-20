@@ -28,7 +28,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   await dbConnect();
 
   try {
-    const { items, invoiceNumber } = await req.json();
+    const { items, invoiceNumber, date } = await req.json();  // <-- date liya
     const bill = await Bill.findById(params.id);
 
     if (!bill) {
@@ -60,6 +60,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     bill.invoiceNumber = invoiceNumber ?? bill.invoiceNumber;
     bill.items = processedItems;
     bill.grandTotal = newGrandTotal;
+    if (date) bill.date = new Date(date);  // <-- bill ka date update
     await bill.save();
 
     // Update Transaction
@@ -67,6 +68,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     if (transaction) {
       transaction.amount = newGrandTotal;
       transaction.description = `Updated Bill Invoice #${bill.invoiceNumber}`;
+      if (date) transaction.date = new Date(date);  // <-- transaction ka date update
       await transaction.save();
     }
 
@@ -90,6 +92,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     return NextResponse.json({ message: 'Internal server error.' }, { status: 500 });
   }
 }
+
 
 // DELETE a bill by ID
 export async function DELETE(_: NextRequest, { params }: { params: { id: string } }) {
