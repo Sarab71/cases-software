@@ -12,7 +12,7 @@ interface BillItemInput {
 }
 
 // GET a bill by ID
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Record<string, string> }) {
   await dbConnect();
   try {
     const bill = await Bill.findById(params.id).populate('customerId');
@@ -25,6 +25,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     return NextResponse.json({ message: 'Internal server error.' }, { status: 500 });
   }
 }
+
 
 // PATCH to update a bill
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
