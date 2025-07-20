@@ -1,4 +1,3 @@
-// utils/pdfTemplate.ts
 export const generateInvoiceHtml = (data: any) => {
     const { invoiceNumber, customer, items, grandTotal, date } = data;
     const roundedGrandTotal = Math.round(data.grandTotal);
@@ -20,6 +19,7 @@ export const generateInvoiceHtml = (data: any) => {
         <style>
           body { font-family: Arial, sans-serif; padding: 20px; }
           h1 { text-align: center; }
+          .details-container { display: flex; justify-content: space-between; margin-top: 20px; }
           table { width: 100%; border-collapse: collapse; margin-top: 20px; }
           th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
           .total { font-size: 16px; margin-top: 20px; text-align: right; }
@@ -27,10 +27,17 @@ export const generateInvoiceHtml = (data: any) => {
       </head>
       <body>
         <h1>INVOICE</h1>
-        <p>Invoice Number: ${invoiceNumber}</p>
-        <p>Date: ${date}</p>
-        <p>Customer Name: ${customer.name}</p>
-        <p>Address: ${customer.address}</p>
+
+        <div class="details-container">
+          <div>
+            <p><strong>Invoice Number:</strong> ${invoiceNumber}</p>
+            <p><strong>Date:</strong> ${date}</p>
+          </div>
+          <div style="text-align: right;">
+            <p><strong>Customer Name:</strong> ${customer.name}</p>
+            <p><strong>Address:</strong> ${customer.address}</p>
+          </div>
+        </div>
 
         <table>
           <thead>
