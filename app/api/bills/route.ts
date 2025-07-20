@@ -5,18 +5,30 @@ import Transaction from '@/models/Transaction';
 import Customer from '@/models/Customer';
 import dbConnect from '@/lib/mongodb';
 
+interface BillItemInput {
+  modelNumber: string;
+  quantity: number;
+  rate: number;
+  discount?: number;
+}
+
 export async function POST(req: NextRequest) {
   await dbConnect();
 
   try {
-    const { invoiceNumber, customerId, items, date } = await req.json();
+    const { invoiceNumber, customerId, items, date }: { 
+      invoiceNumber: number; 
+      customerId: string; 
+      items: BillItemInput[]; 
+      date: string; 
+    } = await req.json();
 
     if (!invoiceNumber || !customerId || !Array.isArray(items) || items.length === 0 || !date) {
       return NextResponse.json({ message: 'Missing required fields or items.' }, { status: 400 });
     }
 
     // Process items
-    const processedItems = items.map((item: any) => {
+    const processedItems = items.map((item: BillItemInput) => {
       const discountPercentage = item.discount ?? 0;
       const discountAmount = item.rate * (discountPercentage / 100);
       const netAmount = item.rate - discountAmount;
@@ -34,7 +46,7 @@ export async function POST(req: NextRequest) {
 
     // Grand total with rounding
     const grandTotal = Math.round(
-      processedItems.reduce((sum: number, item: any) => sum + item.totalAmount, 0)
+      processedItems.reduce((sum: number, item: { totalAmount: number }) => sum + item.totalAmount, 0)
     );
 
     // Create the Bill
@@ -43,7 +55,7 @@ export async function POST(req: NextRequest) {
       customerId: new mongoose.Types.ObjectId(customerId),
       items: processedItems,
       grandTotal,
-      date: new Date(date)  // <-- form se aayi date save ki
+      date: new Date(date)
     });
 
     await newBill.save();
@@ -56,7 +68,7 @@ export async function POST(req: NextRequest) {
       description: `Bill Invoice #${invoiceNumber}`,
       relatedBillId: newBill._id,
       invoiceNumber,
-      date: new Date(date)  // <-- form se aayi date save ki
+      date: new Date(date)
     });
 
     await newTransaction.save();
@@ -75,7 +87,7 @@ export async function POST(req: NextRequest) {
       updatedBalance: customer?.balance
     }, { status: 201 });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error creating bill and transaction:', error);
     return NextResponse.json({ message: 'Internal server error.' }, { status: 500 });
   }

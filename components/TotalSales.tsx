@@ -7,6 +7,11 @@ interface TotalSalesProps {
     endDate?: string;
 }
 
+interface Transaction {
+    amount: number;
+    // add other properties if needed
+}
+
 export default function TotalSales({ startDate = '', endDate = '' }: TotalSalesProps) {
     const [total, setTotal] = useState<number | null>(null);
 
@@ -19,8 +24,8 @@ export default function TotalSales({ startDate = '', endDate = '' }: TotalSalesP
 
             const res = await fetch(`/api/transactions?${params.toString()}`);
             if (res.ok) {
-                const transactions = await res.json();
-                const sum = transactions.reduce((acc: number, t: any) => acc + (t.amount || 0), 0);
+                const transactions: Transaction[] = await res.json();
+                const sum = transactions.reduce((acc, t) => acc + (t.amount || 0), 0);
                 setTotal(sum);
             }
         }

@@ -18,7 +18,10 @@ export async function POST(request: NextRequest) {
     const customer = new Customer(data);
     await customer.save();
     return NextResponse.json(customer, { status: 201 });
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message }, { status: 400 });
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      return NextResponse.json({ message: error.message }, { status: 400 });
+    }
+    return NextResponse.json({ message: 'Unknown error occurred' }, { status: 400 });
   }
 }

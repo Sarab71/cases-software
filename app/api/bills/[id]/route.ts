@@ -4,6 +4,13 @@ import Transaction from '@/models/Transaction';
 import Customer from '@/models/Customer';
 import dbConnect from '@/lib/mongodb';
 
+interface BillItemInput {
+  modelNumber: string;
+  quantity: number;
+  rate: number;
+  discount?: number;
+}
+
 // GET a bill by ID
 export async function GET(_: NextRequest, { params }: { params: { id: string } }) {
   await dbConnect();
@@ -17,7 +24,7 @@ export async function GET(_: NextRequest, { params }: { params: { id: string } }
 
     return NextResponse.json(bill, { status: 200 });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching bill:', error);
     return NextResponse.json({ message: 'Internal server error.' }, { status: 500 });
   }
@@ -28,7 +35,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   await dbConnect();
 
   try {
-    const { items, invoiceNumber, date } = await req.json();  // <-- date liya
+    const { items, invoiceNumber, date }: { items: BillItemInput[]; invoiceNumber: number; date?: string } = await req.json();
     const bill = await Bill.findById(params.id);
 
     if (!bill) {
@@ -38,7 +45,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     const oldGrandTotal = bill.grandTotal;
 
     // Process new items
-    const processedItems = items.map((item: any) => {
+    const processedItems = items.map((item: BillItemInput) => {
       const discountPercentage = item.discount ?? 0;
       const discountAmount = item.rate * (discountPercentage / 100);
       const netAmount = item.rate - discountAmount;
@@ -54,13 +61,13 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       };
     });
 
-    const newGrandTotal = processedItems.reduce((sum: number, item: any) => sum + item.totalAmount, 0);
+    const newGrandTotal = processedItems.reduce((sum: number, item: { totalAmount: number }) => sum + item.totalAmount, 0);
 
     // Update bill fields
     bill.invoiceNumber = invoiceNumber ?? bill.invoiceNumber;
     bill.items = processedItems;
     bill.grandTotal = newGrandTotal;
-    if (date) bill.date = new Date(date);  // <-- bill ka date update
+    if (date) bill.date = new Date(date);
     await bill.save();
 
     // Update Transaction
@@ -68,14 +75,13 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     if (transaction) {
       transaction.amount = newGrandTotal;
       transaction.description = `Updated Bill Invoice #${bill.invoiceNumber}`;
-      if (date) transaction.date = new Date(date);  // <-- transaction ka date update
+      if (date) transaction.date = new Date(date);
       await transaction.save();
     }
 
     // Update Customer Balance
     const customer = await Customer.findById(bill.customerId);
     if (customer) {
-      // Adjust balance: remove old amount, add new amount
       customer.balance += (oldGrandTotal - newGrandTotal);
       await customer.save();
     }
@@ -87,12 +93,11 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       updatedBalance: customer?.balance
     }, { status: 200 });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error updating bill:', error);
     return NextResponse.json({ message: 'Internal server error.' }, { status: 500 });
   }
 }
-
 
 // DELETE a bill by ID
 export async function DELETE(_: NextRequest, { params }: { params: { id: string } }) {
@@ -108,15 +113,12 @@ export async function DELETE(_: NextRequest, { params }: { params: { id: string 
     const transaction = await Transaction.findOne({ relatedBillId: bill._id });
     const customer = await Customer.findById(bill.customerId);
 
-    // Remove Bill
     await bill.deleteOne();
 
-    // Remove transaction
     if (transaction) {
       await transaction.deleteOne();
     }
 
-    // Adjust customer balance (add back the bill amount since bill is deleted)
     if (customer) {
       customer.balance += bill.grandTotal;
       await customer.save();
@@ -127,7 +129,7 @@ export async function DELETE(_: NextRequest, { params }: { params: { id: string 
       updatedBalance: customer?.balance
     }, { status: 200 });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error deleting bill:', error);
     return NextResponse.json({ message: 'Internal server error.' }, { status: 500 });
   }

@@ -1,32 +1,37 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, ChangeEvent, KeyboardEvent, FormEvent } from 'react';
 import { toast } from 'react-toastify';
 
+interface Customer {
+  _id: string;
+  name: string;
+}
+
 export default function AddPaymentForm() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filteredCustomers, setFilteredCustomers] = useState<any[]>([]);
-  const [customers, setCustomers] = useState<any[]>([]);
-  const [selectedIndex, setSelectedIndex] = useState(-1);
-  const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
-  const [amount, setAmount] = useState('');
-  const [date, setDate] = useState('');
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [selectedIndex, setSelectedIndex] = useState<number>(-1);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [amount, setAmount] = useState<string>('');
+  const [date, setDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
   const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const fetchCustomers = async () => {
       try {
         const res = await fetch('/api/customers');
-        const data = await res.json();
+        const data: Customer[] = await res.json();
         setCustomers(data);
-      } catch (error) {
+      } catch {
         toast.error('Failed to load customers.');
       }
     };
     fetchCustomers();
   }, []);
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchTerm(value);
 
@@ -42,7 +47,7 @@ export default function AddPaymentForm() {
     setSelectedIndex(-1);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'ArrowDown') {
       setSelectedIndex((prev) =>
         prev < filteredCustomers.length - 1 ? prev + 1 : prev
@@ -57,13 +62,13 @@ export default function AddPaymentForm() {
     }
   };
 
-  const handleSelectCustomer = (customer: any) => {
+  const handleSelectCustomer = (customer: Customer) => {
     setSelectedCustomer(customer);
     setSearchTerm(customer.name);
     setFilteredCustomers([]);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
     if (!selectedCustomer) {
@@ -78,7 +83,7 @@ export default function AddPaymentForm() {
         body: JSON.stringify({
           customerId: selectedCustomer._id,
           amount: Number(amount),
-          date, // send date
+          date,
         }),
       });
 
@@ -92,7 +97,7 @@ export default function AddPaymentForm() {
         const data = await response.json();
         toast.error(data.message || 'Failed to add payment.');
       }
-    } catch (err) {
+    } catch {
       toast.error('Something went wrong.');
     }
   };
@@ -118,9 +123,7 @@ export default function AddPaymentForm() {
             {filteredCustomers.map((customer, index) => (
               <li
                 key={customer._id}
-                className={`p-2 cursor-pointer ${
-                  index === selectedIndex ? 'bg-blue-100' : ''
-                }`}
+                className={`p-2 cursor-pointer ${index === selectedIndex ? 'bg-blue-100' : ''}`}
                 onClick={() => handleSelectCustomer(customer)}
               >
                 {customer.name}
@@ -149,7 +152,6 @@ export default function AddPaymentForm() {
           onChange={e => setDate(e.target.value)}
           className="w-full border rounded p-2"
         />
-        <span className="text-xs text-gray-500">Leave blank for today</span>
       </div>
 
       <button

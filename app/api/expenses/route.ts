@@ -2,28 +2,31 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import ExpenseCategory from '@/models/Expense';
 
+interface ExpenseInput {
+  description: string;
+  amount: number;
+  date?: string;
+}
+
 export async function POST(req: NextRequest) {
   await dbConnect();
-  const { category, description, amount, date } = await req.json();
+  const { category, description, amount, date }: { category: string; description: string; amount: number; date?: string } = await req.json();
 
   if (!category || !description || !amount) {
     return NextResponse.json({ message: 'Missing fields' }, { status: 400 });
   }
 
-  // Try to find the category
   let cat = await ExpenseCategory.findOne({ category });
 
-  const expenseObj: any = { description, amount };
-  if (date) expenseObj.date = new Date(date);
+  const expenseObj: ExpenseInput = { description, amount };
+  if (date) expenseObj.date = date;
 
   if (!cat) {
-    // Create new category with first expense
     cat = await ExpenseCategory.create({
       category,
       expenses: [expenseObj]
     });
   } else {
-    // Add expense to existing category
     cat.expenses.push(expenseObj);
     await cat.save();
   }
@@ -36,7 +39,10 @@ export async function GET() {
   try {
     const categories = await ExpenseCategory.find().lean();
     return NextResponse.json(categories, { status: 200 });
-  } catch (error: any) {
-    return NextResponse.json({ message: 'Failed to fetch expenses', error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      return NextResponse.json({ message: 'Failed to fetch expenses', error: error.message }, { status: 500 });
+    }
+    return NextResponse.json({ message: 'Failed to fetch expenses' }, { status: 500 });
   }
 }

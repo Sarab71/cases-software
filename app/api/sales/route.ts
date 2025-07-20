@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
         const startDate = searchParams.get('startDate');
         const endDate = searchParams.get('endDate');
 
-        const filter: any = { type: 'debit' }; // <-- only debit transactions
+        const filter: Record<string, unknown> = { type: 'debit' }; // Only debit transactions
 
         if (startDate && endDate) {
             filter.date = {
@@ -21,11 +21,20 @@ export async function GET(req: NextRequest) {
 
         const transactions = await Transaction.find(filter);
 
-        const totalSales = transactions.reduce((sum, txn) => sum + (txn.amount || 0), 0);
+        const totalSales = transactions.reduce(
+            (sum: number, txn: { amount?: number }) => sum + (txn.amount || 0),
+            0
+        );
 
         return NextResponse.json({ totalSales });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Error fetching total sales:', error);
-        return NextResponse.json({ message: 'Internal server error', error: error.message }, { status: 500 });
+        if (error instanceof Error) {
+            return NextResponse.json(
+                { message: 'Internal server error', error: error.message },
+                { status: 500 }
+            );
+        }
+        return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
     }
 }

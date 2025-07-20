@@ -75,11 +75,21 @@ export default function ExpenseForm() {
     e.preventDefault();
     setLoading(true);
 
-    const payload: any = {
-      category,
-      description,
-      amount: Number(amount)
-    };
+interface ExpensePayload {
+  category: string;
+  description: string;
+  amount: number;
+  date?: string;
+}
+
+const payload: ExpensePayload = {
+  category,
+  description,
+  amount: Number(amount),
+};
+
+if (date) payload.date = date;
+
     if (date) payload.date = date;
 
     const res = await fetch('/api/expenses', {

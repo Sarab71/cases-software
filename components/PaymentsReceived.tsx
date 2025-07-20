@@ -7,6 +7,11 @@ interface PaymentsReceivedProps {
     endDate?: string;
 }
 
+interface Transaction {
+    amount: number;
+    // add other fields if needed
+}
+
 export default function PaymentsReceived({ startDate = '', endDate = '' }: PaymentsReceivedProps) {
     const [total, setTotal] = useState<number | null>(null);
 
@@ -19,8 +24,8 @@ export default function PaymentsReceived({ startDate = '', endDate = '' }: Payme
 
             const res = await fetch(`/api/transactions?${params.toString()}`);
             if (res.ok) {
-                const transactions = await res.json();
-                const sum = transactions.reduce((acc: number, t: any) => acc + (t.amount || 0), 0);
+                const transactions: Transaction[] = await res.json();
+                const sum = transactions.reduce((acc, t) => acc + (t.amount || 0), 0);
                 setTotal(sum);
             }
         }

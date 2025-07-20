@@ -29,8 +29,11 @@ export async function PUT(request: NextRequest, { params }: Params) {
       return NextResponse.json({ message: 'Customer not found' }, { status: 404 });
     }
     return NextResponse.json(customer);
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message }, { status: 400 });
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      return NextResponse.json({ message: error.message }, { status: 400 });
+    }
+    return NextResponse.json({ message: 'Unknown error occurred' }, { status: 400 });
   }
 }
 
@@ -43,7 +46,10 @@ export async function DELETE(request: NextRequest, { params }: Params) {
       return NextResponse.json({ message: 'Customer not found' }, { status: 404 });
     }
     return NextResponse.json({ message: 'Customer deleted successfully' });
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message }, { status: 400 });
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      return NextResponse.json({ message: error.message }, { status: 400 });
+    }
+    return NextResponse.json({ message: 'Unknown error occurred' }, { status: 400 });
   }
 }
