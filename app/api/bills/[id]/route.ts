@@ -12,65 +12,47 @@ interface BillItemInput {
 }
 
 // GET a bill by ID
-export async function GET(_: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, context: { params: { id: string } }) {
   await dbConnect();
-
   try {
-    const bill = await Bill.findById(params.id).populate('customerId');
-
+    const bill = await Bill.findById(context.params.id).populate('customerId');
     if (!bill) {
       return NextResponse.json({ message: 'Bill not found.' }, { status: 404 });
     }
-
     return NextResponse.json(bill, { status: 200 });
-
   } catch (error: unknown) {
     console.error('Error fetching bill:', error);
     return NextResponse.json({ message: 'Internal server error.' }, { status: 500 });
   }
 }
 
-// UPDATE a bill by ID
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, context: { params: { id: string } }) {
   await dbConnect();
-
   try {
     const { items, invoiceNumber, date }: { items: BillItemInput[]; invoiceNumber: number; date?: string } = await req.json();
-    const bill = await Bill.findById(params.id);
+    const bill = await Bill.findById(context.params.id);
 
     if (!bill) {
       return NextResponse.json({ message: 'Bill not found.' }, { status: 404 });
     }
 
     const oldGrandTotal = bill.grandTotal;
-
-    // Process new items
     const processedItems = items.map((item: BillItemInput) => {
       const discountPercentage = item.discount ?? 0;
       const discountAmount = item.rate * (discountPercentage / 100);
       const netAmount = item.rate - discountAmount;
       const totalAmount = netAmount * item.quantity;
-
-      return {
-        modelNumber: item.modelNumber,
-        quantity: item.quantity,
-        rate: item.rate,
-        discount: discountPercentage > 0 ? discountPercentage : undefined,
-        netAmount,
-        totalAmount
-      };
+      return { modelNumber: item.modelNumber, quantity: item.quantity, rate: item.rate, discount: discountPercentage, netAmount, totalAmount };
     });
 
-    const newGrandTotal = processedItems.reduce((sum: number, item: { totalAmount: number }) => sum + item.totalAmount, 0);
+    const newGrandTotal = processedItems.reduce((sum, item) => sum + item.totalAmount, 0);
 
-    // Update bill fields
     bill.invoiceNumber = invoiceNumber ?? bill.invoiceNumber;
     bill.items = processedItems;
     bill.grandTotal = newGrandTotal;
     if (date) bill.date = new Date(date);
     await bill.save();
 
-    // Update Transaction
     const transaction = await Transaction.findOne({ relatedBillId: bill._id });
     if (transaction) {
       transaction.amount = newGrandTotal;
@@ -79,7 +61,6 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       await transaction.save();
     }
 
-    // Update Customer Balance
     const customer = await Customer.findById(bill.customerId);
     if (customer) {
       customer.balance += (oldGrandTotal - newGrandTotal);
@@ -99,13 +80,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
 }
 
-// DELETE a bill by ID
-export async function DELETE(_: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, context: { params: { id: string } }) {
   await dbConnect();
-
   try {
-    const bill = await Bill.findById(params.id);
-
+    const bill = await Bill.findById(context.params.id);
     if (!bill) {
       return NextResponse.json({ message: 'Bill not found.' }, { status: 404 });
     }
@@ -114,11 +92,7 @@ export async function DELETE(_: NextRequest, { params }: { params: { id: string 
     const customer = await Customer.findById(bill.customerId);
 
     await bill.deleteOne();
-
-    if (transaction) {
-      await transaction.deleteOne();
-    }
-
+    if (transaction) await transaction.deleteOne();
     if (customer) {
       customer.balance += bill.grandTotal;
       await customer.save();
@@ -134,3 +108,4 @@ export async function DELETE(_: NextRequest, { params }: { params: { id: string 
     return NextResponse.json({ message: 'Internal server error.' }, { status: 500 });
   }
 }
+
