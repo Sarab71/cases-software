@@ -3,6 +3,7 @@ import { useState } from 'react';
 import TotalOutstanding from '@/components/TotalOutstanding';
 import PaymentsReceived from '@/components/PaymentsReceived';
 import TotalSales from '@/components/TotalSales';
+import TotalExpenses from '@/components/TotalExpenses';
 
 export default function Home() {
   const [startDate, setStartDate] = useState('');
@@ -41,6 +42,7 @@ export default function Home() {
         <TotalOutstanding startDate={startDate} endDate={endDate} />
         <PaymentsReceived startDate={startDate} endDate={endDate} />
         <TotalSales startDate={startDate} endDate={endDate} />
+        <TotalExpenses startDate={startDate} endDate={endDate} />
       </div>
     </>
   );

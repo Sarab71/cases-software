@@ -19,7 +19,7 @@ interface Customer {
 }
 
 export default function CreateBillForm() {
-  const [billDate, setBillDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
+  const [billDate, setBillDate] = useState<string>('');
   const [invoiceNumber, setInvoiceNumber] = useState<number>(1001);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [customerSearch, setCustomerSearch] = useState<string>('');

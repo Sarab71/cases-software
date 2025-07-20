@@ -10,7 +10,7 @@ export default function AddPaymentForm() {
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
   const [amount, setAmount] = useState('');
-  const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState('');
   const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -155,7 +155,7 @@ export default function AddPaymentForm() {
 
       <button
         type="submit"
-        className="bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700"
+        className="bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 cursor-pointer"
       >
         Add Payment
       </button>
