@@ -109,7 +109,6 @@ export default function PaymentEditForm({ paymentId, onClose, onUpdated }: Payme
                     value={editDate}
                     onChange={e => setEditDate(e.target.value)}
                     className="border p-2 rounded w-full"
-                    max={new Date().toISOString().split('T')[0]}
                     required
                 />
             </div>

@@ -148,7 +148,6 @@ export default function AddPaymentForm() {
           value={date}
           onChange={e => setDate(e.target.value)}
           className="w-full border rounded p-2"
-          max={new Date().toISOString().split('T')[0]}
         />
         <span className="text-xs text-gray-500">Leave blank for today</span>
       </div>

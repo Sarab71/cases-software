@@ -176,7 +176,6 @@ export default function ExpenseForm() {
           onChange={e => setDate(e.target.value)}
           className="border p-2 rounded w-full"
           placeholder="Date"
-          max={new Date().toISOString().split('T')[0]}
         />
         <span className="text-xs text-gray-500">Leave blank for today</span>
       </div>

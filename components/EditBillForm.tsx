@@ -113,7 +113,6 @@ export default function EditBillForm({ billId, onClose, onUpdated }: EditBillFor
                     value={editDate}
                     onChange={e => setEditDate(e.target.value)}
                     className="border p-2 rounded w-full"
-                    max={new Date().toISOString().split('T')[0]}
                     required
                 />
             </div>

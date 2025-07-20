@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 
 interface Item {
   modelNumber: string;
@@ -102,7 +100,7 @@ export default function CreateBillForm() {
       const netPrice = rate - discountAmount;
       return sum + netPrice * quantity;
     }, 0);
-    setGrandTotal(total);
+    setGrandTotal(Math.round(total));
   };
 
   const handleAddItem = () => {
@@ -173,91 +171,53 @@ export default function CreateBillForm() {
     setGrandTotal(0);
   };
 
+const downloadPdf = async () => {
+  if (!selectedCustomer) {
+    toast.error('Please select customer first');
+    return;
+  }
 
+  // Process items to include netAmount and totalAmount
+  const processedItems = items.map(item => {
+    const quantity = Number(item.quantity) || 0;
+    const rate = Number(item.rate) || 0;
+    const discount = Number(item.discount) || 0;
 
-  const exportPdf = () => {
-    if (!selectedCustomer) {
-      toast.error('Select a customer first to export PDF');
-      return;
-    }
+    const discountAmount = (rate * discount) / 100;
+    const netAmount = rate - discountAmount;
+    const totalAmount = netAmount * quantity;
 
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
+    return {
+      ...item,
+      netAmount: netAmount.toFixed(2),
+      totalAmount: totalAmount.toFixed(2),
+    };
+  });
 
-    // Header
-    doc.setFontSize(20);
-    doc.text('INVOICE', pageWidth / 2, 20, { align: 'center' });
+  const res = await fetch('/api/bills/generate-pdf', {
+    method: 'POST',
+    body: JSON.stringify({
+      invoiceNumber,
+      customer: selectedCustomer,
+      items: processedItems,
+      grandTotal: Math.round(grandTotal),
+      date: new Date().toLocaleDateString(),
+    }),
+    headers: { 'Content-Type': 'application/json' }
+  });
 
-    doc.setFontSize(12);
-    let currentY = 30;
-
-    doc.setFont('helvetica', 'bold');
-    doc.text('Invoice Details:', 14, currentY);
-    doc.setFont('helvetica', 'normal');
-    currentY += 8;
-    doc.text(`Invoice Number: ${invoiceNumber}`, 14, currentY);
-    currentY += 6;
-    doc.text(`Date: ${new Date().toLocaleDateString()}`, 14, currentY);
-
-    currentY += 10;
-
-    doc.setFont('helvetica', 'bold');
-    doc.text('Customer Details:', 14, currentY);
-    doc.setFont('helvetica', 'normal');
-    currentY += 8;
-    doc.text(`Name: ${selectedCustomer.name}`, 14, currentY);
-    currentY += 6;
-    doc.text(`Address: ${selectedCustomer.address}`, 14, currentY);
-
-    currentY += 12;
-
-    // Prepare table body with number conversion
-    const tableBody = items.map((item, index) => {
-      const quantity = Number(item.quantity) || 0;
-      const rate = Number(item.rate) || 0;
-      const discount = Number(item.discount) || 0;
-
-      const discountAmount = (rate * discount) / 100;
-      const totalAmount = (rate - discountAmount) * quantity;
-
-      return [
-        (index + 1).toString(),
-        item.modelNumber,
-        quantity.toString(),
-        rate.toFixed(2),
-        discount + '%',
-        totalAmount.toFixed(2),
-      ];
-    });
-
-    autoTable(doc, {
-      startY: currentY,
-      head: [['#', 'Model No.', 'Quantity', 'Rate', 'Discount', 'Total']],
-      body: tableBody,
-      theme: 'grid',
-      headStyles: { fillColor: [63, 81, 181], textColor: 255 },
-      styles: { halign: 'center', fontSize: 10 },
-      columnStyles: {
-        0: { cellWidth: 10 },
-        1: { cellWidth: 40 },
-        2: { cellWidth: 20 },
-        3: { cellWidth: 20 },
-        4: { cellWidth: 20 },
-        5: { cellWidth: 25 },
-      },
-    });
-
-    const finalY = (doc as any).lastAutoTable.finalY || currentY + 40;
-
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text(`Grand Total: ${Math.round(grandTotal)}`, pageWidth / 2, finalY + 15, {
-      align: 'center',
-    });
-
-
-    doc.save(`Invoice_${invoiceNumber}.pdf`);
-  };
+  if (res.ok) {
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Invoice_${invoiceNumber}.pdf`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  } else {
+    toast.error('Failed to generate PDF');
+  }
+};
 
 
 
@@ -282,7 +242,6 @@ export default function CreateBillForm() {
           value={billDate}
           onChange={e => setBillDate(e.target.value)}
           className="w-full border p-2 rounded"
-          max={new Date().toISOString().split('T')[0]}
         />
       </div>
 
@@ -404,7 +363,7 @@ export default function CreateBillForm() {
         </button>
         <button
           type="button"
-          onClick={exportPdf}
+          onClick={downloadPdf}
           className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 cursor-pointer"
         >
           Export as PDF
