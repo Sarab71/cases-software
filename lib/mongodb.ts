@@ -13,10 +13,11 @@ interface MongooseCache {
 
 // Use a properly typed global property
 declare global {
+  // eslint-disable-next-line no-var
   var mongooseCache: MongooseCache | undefined;
 }
 
-let cached: MongooseCache = global.mongooseCache || { conn: null, promise: null };
+const cached: MongooseCache = global.mongooseCache || { conn: null, promise: null };
 
 global.mongooseCache = cached;
 

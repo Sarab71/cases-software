@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import ExpenseCategory from '@/models/Expense';
 
+interface Expense {
+    amount: number;
+    date: string;
+}
+
 export async function GET(req: NextRequest) {
     await dbConnect();
 
@@ -14,7 +19,7 @@ export async function GET(req: NextRequest) {
 
         let totalExpenses = 0;
         categories.forEach(category => {
-            category.expenses.forEach((expense: any) => {
+            category.expenses.forEach((expense: Expense) => {
                 const expenseDate = new Date(expense.date);
                 if (
                     (!startDate || expenseDate >= new Date(startDate)) &&
@@ -26,8 +31,8 @@ export async function GET(req: NextRequest) {
         });
 
         return NextResponse.json({ totalExpenses });
-    } catch (error: any) {
+    } catch (error) {
         console.error('Error calculating total expenses:', error);
-        return NextResponse.json({ message: 'Internal server error', error: error.message }, { status: 500 });
+        return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
     }
 }

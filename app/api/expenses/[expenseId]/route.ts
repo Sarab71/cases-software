@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import ExpenseCategory from '@/models/Expense';
+import mongoose from 'mongoose';
 
 export async function DELETE(req: NextRequest, { params }: { params: { expenseId: string } }) {
     await dbConnect();
@@ -15,11 +16,13 @@ export async function DELETE(req: NextRequest, { params }: { params: { expenseId
         }
 
         // Remove the expense from the category
-        category.expenses = category.expenses.filter((exp: any) => exp._id.toString() !== expenseId);
+        category.expenses = category.expenses.filter(
+            (exp: { _id: mongoose.Types.ObjectId }) => exp._id.toString() !== expenseId
+        );
         await category.save();
 
         return NextResponse.json({ message: 'Expense deleted successfully' }, { status: 200 });
-    } catch (error: any) {
+    } catch (error) {
         console.error('Error deleting expense:', error);
         return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
     }
