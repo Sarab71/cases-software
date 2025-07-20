@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import dbConnect from '@/lib/mongodb';
 import Bill from '@/models/Bill';
 import Transaction from '@/models/Transaction';
 import Customer from '@/models/Customer';
+import dbConnect from '@/lib/mongodb';
 
 interface BillItemInput {
   modelNumber: string;
@@ -12,39 +12,37 @@ interface BillItemInput {
 }
 
 // GET a bill by ID
-export async function GET(req: NextRequest, { params }: { params: Record<string, string> }) {
+export async function GET(req: NextRequest, context: { params: { id: string } }) {
   await dbConnect();
   try {
-    const bill = await Bill.findById(params.id).populate('customerId');
+    const bill = await Bill.findById(context.params.id).populate('customerId');
     if (!bill) {
       return NextResponse.json({ message: 'Bill not found.' }, { status: 404 });
     }
     return NextResponse.json(bill, { status: 200 });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error fetching bill:', error);
     return NextResponse.json({ message: 'Internal server error.' }, { status: 500 });
   }
 }
 
-
-// PATCH to update a bill
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, context: { params: { id: string } }) {
   await dbConnect();
   try {
     const { items, invoiceNumber, date }: { items: BillItemInput[]; invoiceNumber: number; date?: string } = await req.json();
-    const bill = await Bill.findById(params.id);
+    const bill = await Bill.findById(context.params.id);
 
     if (!bill) {
       return NextResponse.json({ message: 'Bill not found.' }, { status: 404 });
     }
 
     const oldGrandTotal = bill.grandTotal;
-    const processedItems = items.map(item => {
-      const discount = item.discount ?? 0;
-      const discountAmount = item.rate * (discount / 100);
+    const processedItems = items.map((item: BillItemInput) => {
+      const discountPercentage = item.discount ?? 0;
+      const discountAmount = item.rate * (discountPercentage / 100);
       const netAmount = item.rate - discountAmount;
       const totalAmount = netAmount * item.quantity;
-      return { ...item, discount, netAmount, totalAmount };
+      return { modelNumber: item.modelNumber, quantity: item.quantity, rate: item.rate, discount: discountPercentage, netAmount, totalAmount };
     });
 
     const newGrandTotal = processedItems.reduce((sum, item) => sum + item.totalAmount, 0);
@@ -76,17 +74,16 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       updatedBalance: customer?.balance
     }, { status: 200 });
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error updating bill:', error);
     return NextResponse.json({ message: 'Internal server error.' }, { status: 500 });
   }
 }
 
-// DELETE a bill by ID
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, context: { params: { id: string } }) {
   await dbConnect();
   try {
-    const bill = await Bill.findById(params.id);
+    const bill = await Bill.findById(context.params.id);
     if (!bill) {
       return NextResponse.json({ message: 'Bill not found.' }, { status: 404 });
     }
@@ -106,8 +103,9 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
       updatedBalance: customer?.balance
     }, { status: 200 });
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error deleting bill:', error);
     return NextResponse.json({ message: 'Internal server error.' }, { status: 500 });
   }
 }
+
