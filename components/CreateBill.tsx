@@ -171,62 +171,78 @@ export default function CreateBillForm() {
       toast.error('Failed to generate PDF');
     }
   };
+  const handleDeleteItem = (index: number) => {
+    const updatedItems = items.filter((_, i) => i !== index);
+    setItems(updatedItems);
+    calculateGrandTotal(updatedItems);
+  };
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-4xl mx-auto p-4 bg-white shadow rounded space-y-4">
-      <h2 className="text-xl font-bold">Create Bill</h2>
+    <form onSubmit={handleSubmit} className="max-w-4xl mx-auto p-6 bg-white shadow-lg rounded space-y-6">
+      <h2 className="text-2xl font-bold text-center">Create Bill</h2>
 
-      <input
-        value={invoiceNumber}
-        readOnly
-        className="w-full border p-2 rounded bg-gray-100"
-      />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block font-medium mb-1">Invoice Number</label>
+          <input
+            value={invoiceNumber}
+            readOnly
+            className="w-full border p-2 rounded bg-gray-100"
+          />
+        </div>
 
-      <input
-        type="date"
-        value={billDate}
-        onChange={(e) => setBillDate(e.target.value)}
-        className="w-full border p-2 rounded"
-      />
+        <div>
+          <label className="block font-medium mb-1">Bill Date</label>
+          <input
+            type="date"
+            value={billDate}
+            onChange={(e) => setBillDate(e.target.value)}
+            className="w-full border p-2 rounded"
+          />
+        </div>
+      </div>
 
-      <input
-        type="text"
-        value={customerSearch}
-        onChange={handleCustomerSearch}
-        onKeyDown={handleCustomerKeyDown}
-        placeholder="Search Customer"
-        className="w-full border p-2 rounded"
-      />
+      <div>
+        <label className="block font-medium mb-1">Search Customer</label>
+        <input
+          type="text"
+          value={customerSearch}
+          onChange={handleCustomerSearch}
+          onKeyDown={handleCustomerKeyDown}
+          placeholder="Type customer name"
+          className="w-full border p-2 rounded"
+        />
 
-      {filteredCustomers.length > 0 && (
-        <ul className="bg-white border rounded mt-1 max-h-48 overflow-y-auto">
-          {filteredCustomers.map((customer, idx) => (
-            <li
-              key={customer._id}
-              onClick={() => handleSelectCustomer(customer)}
-              className={`p-2 cursor-pointer ${idx === selectedIndex ? 'bg-blue-100' : ''}`}
-            >
-              {customer.name} - {customer.address}
-            </li>
-          ))}
-        </ul>
-      )}
+        {filteredCustomers.length > 0 && (
+          <ul className="bg-white border rounded mt-1 max-h-48 overflow-y-auto">
+            {filteredCustomers.map((customer, idx) => (
+              <li
+                key={customer._id}
+                onClick={() => handleSelectCustomer(customer)}
+                className={`p-2 cursor-pointer ${idx === selectedIndex ? 'bg-blue-100' : ''}`}
+              >
+                {customer.name} - {customer.address}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
 
       {selectedCustomer && (
-        <div>
-          <strong>Selected:</strong> {selectedCustomer.name} ({selectedCustomer.address})
+        <div className="p-2 bg-gray-100 rounded border">
+          <strong>Selected Customer:</strong> {selectedCustomer.name} ({selectedCustomer.address})
         </div>
       )}
 
-      <table className="w-full border-collapse border border-gray-300">
+      <table className="w-full border-collapse border border-gray-300 mt-4 text-sm">
         <thead className="bg-gray-100">
           <tr>
-            <th>Model</th>
-            <th>Qty</th>
-            <th>Rate</th>
-            <th>Disc%</th>
-            <th>Net</th>
-            <th>Total</th>
+            <th className="border p-2">Model</th>
+            <th className="border p-2">Qty</th>
+            <th className="border p-2">Rate</th>
+            <th className="border p-2">Disc%</th>
+            <th className="border p-2">Net</th>
+            <th className="border p-2">Total</th>
           </tr>
         </thead>
         <tbody>
@@ -241,49 +257,82 @@ export default function CreateBillForm() {
 
             return (
               <tr key={index}>
-                <td>
+                <td className="border p-1">
                   <input
                     value={item.modelNumber}
                     onChange={(e) => handleItemChange(index, 'modelNumber', e.target.value)}
+                    className="w-full border p-1 rounded"
                   />
                 </td>
-                <td>
+                <td className="border p-1">
                   <input
                     type="number"
                     value={item.quantity}
                     onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
+                    className="w-full border p-1 rounded"
                   />
                 </td>
-                <td>
+                <td className="border p-1">
                   <input
                     type="number"
                     value={item.rate}
                     onChange={(e) => handleItemChange(index, 'rate', e.target.value)}
+                    className="w-full border p-1 rounded"
                   />
                 </td>
-                <td>
+                <td className="border p-1">
                   <input
                     type="number"
                     value={item.discount}
                     onChange={(e) => handleItemChange(index, 'discount', e.target.value)}
+                    className="w-full border p-1 rounded"
                   />
                 </td>
-                <td>{netPrice.toFixed(2)}</td>
-                <td>{totalAmount.toFixed(2)}</td>
+                <td className="border p-1 text-center">{netPrice.toFixed(2)}</td>
+                <td className="border p-1 text-center">{totalAmount.toFixed(2)}</td>
               </tr>
             );
           })}
         </tbody>
       </table>
 
-      <button type="button" onClick={handleAddItem} className="bg-blue-500 text-white p-1 rounded">+ Add Item</button>
+      <div className="flex gap-2 mt-2">
+        <button
+          type="button"
+          onClick={handleAddItem}
+          className="bg-blue-500 text-white py-1 px-3 rounded hover:bg-blue-600"
+        >
+          + Add Item
+        </button>
 
-      <div className="font-semibold">Grand Total: ₹{grandTotal}</div>
+        <button
+          type="button"
+          onClick={() => {
+            if (items.length > 1) {
+              const updatedItems = items.slice(0, -1);
+              setItems(updatedItems);
+              calculateGrandTotal(updatedItems);
+            }
+          }}
+          className="bg-red-500 text-white py-1 px-3 rounded hover:bg-red-600"
+        >
+          - Delete Last Item
+        </button>
+      </div>
 
-      <div className="flex gap-2">
-        <button type="submit" className="bg-green-600 text-white p-2 rounded">Create Bill</button>
-        <button type="button" onClick={downloadPdf} className="bg-blue-600 text-white p-2 rounded">Export as PDF</button>
+      <div className="mt-4 text-right font-semibold text-lg">
+        Grand Total: ₹{Math.round(grandTotal)}
+      </div>
+
+      <div className="flex gap-2 justify-end">
+        <button type="submit" className="bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700">
+          Create Bill
+        </button>
+        <button type="button" onClick={downloadPdf} className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700">
+          Export as PDF
+        </button>
       </div>
     </form>
   );
+
 }
