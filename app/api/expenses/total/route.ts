@@ -2,11 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import ExpenseCategory from '@/models/Expense';
 
-interface Expense {
-    amount: number;
-    date: string;
-}
-
 export async function GET(req: NextRequest) {
     await dbConnect();
 
@@ -15,15 +10,19 @@ export async function GET(req: NextRequest) {
         const startDate = searchParams.get('startDate');
         const endDate = searchParams.get('endDate');
 
+        const start = startDate ? new Date(startDate) : null;
+        const end = endDate ? new Date(endDate) : null;
+        if (end) end.setDate(end.getDate() + 1); // Include end date fully
+
         const categories = await ExpenseCategory.find();
 
         let totalExpenses = 0;
         categories.forEach(category => {
-            category.expenses.forEach((expense: Expense) => {
+            category.expenses.forEach((expense: any) => {
                 const expenseDate = new Date(expense.date);
                 if (
-                    (!startDate || expenseDate >= new Date(startDate)) &&
-                    (!endDate || expenseDate <= new Date(endDate))
+                    (!start || expenseDate >= start) &&
+                    (!end || expenseDate < end)
                 ) {
                     totalExpenses += expense.amount || 0;
                 }
@@ -31,8 +30,11 @@ export async function GET(req: NextRequest) {
         });
 
         return NextResponse.json({ totalExpenses });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error calculating total expenses:', error);
-        return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
+        return NextResponse.json(
+            { message: 'Internal server error', error: error.message },
+            { status: 500 }
+        );
     }
 }

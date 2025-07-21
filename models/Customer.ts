@@ -6,6 +6,7 @@ export interface ICustomer extends Document {
   address: string;
   balance?: number;
   createdAt: Date;
+  updatedAt: Date;
 }
 
 const customerSchema = new Schema<ICustomer>({
@@ -13,7 +14,7 @@ const customerSchema = new Schema<ICustomer>({
   phone: { type: String, required: true },
   address: { type: String, required: true },
   balance: { type: Number, default: 0 },
-  createdAt: { type: Date, default: Date.now }
-});
+}, { timestamps: true });  // this auto-adds createdAt and updatedAt
+
 
 export default mongoose.models.Customer || mongoose.model<ICustomer>('Customer', customerSchema);
